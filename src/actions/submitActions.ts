@@ -223,3 +223,28 @@ export const getBookmarks = async (userId: number) => {
 export const getLoggedUserAction = async () => {
   return await getLoggedUser();
 };
+
+export const addNewEvent = async (formData: any) => {
+  console.log(formData);
+  console.log("An event add request came from frontend");
+  try {
+    const res = await prisma.event.create({ data: formData });
+    if (res) {
+      return {
+        status: "success",
+        message: "Event Created successfully",
+      };
+    } else {
+      return {
+        status: "failed",
+        message: "Could not create event due to some error",
+      };
+    }
+  } catch (err) {
+    console.log("some error while creating event ", err);
+    return {
+      status: "failed",
+      message: "Could not create event due to some error",
+    };
+  }
+};

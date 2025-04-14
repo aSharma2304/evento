@@ -343,264 +343,270 @@ import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  CalendarDays,
-  MapPin,
-  Tag,
-  Clock,
-  Users,
-  Link as LinkIcon,
-} from "lucide-react";
+import { CalendarDays, MapPin, Tag, Link as LinkIcon } from "lucide-react";
+import { addNewEvent } from "@/actions/submitActions";
 
+// Simplified schema based on your Event model
 export const eventFormSchema = z.object({
   eventName: z.string().min(3, "Event name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  organizerName: z.string().min(2, "Organizer name is required"),
-  contactEmail: z.string().email("Invalid email address"),
-  contactPhone: z.string().optional(),
+  city: z.string().min(2, "City is required"),
+  address: z.string().min(5, "Address is required"),
+  date: z.string().min(1, "Date is required"),
+  time: z.string().min(1, "Time is required"),
+  link: z.string().url("Must be a valid URL"),
   category: z.string().min(1, "Category is required"),
-  dateTime: z.string(),
-  venueAddress: z.string().min(5, "Address is required"),
-  ticketLink: z.string().url().optional(),
-  image: z.any().optional(),
-  tags: z.string().optional(),
-  notes: z.string().optional(),
-  duration: z.number().optional(),
-  eventType: z.string(),
-  ageRestriction: z.string().optional(),
-  capacity: z.number().optional(),
-  socialLinks: z.string().url().optional(),
+  organizerName: z.string().min(2, "Organizer name is required"),
+  contactNo: z.string().min(5, "Contact number is required"),
+  email: z.string().email("Invalid email address"),
 });
 
 type EventFormData = z.infer<typeof eventFormSchema>;
 
-function App() {
+function EventForm() {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
-    defaultValues: {
-      eventType: "Offline",
-      ageRestriction: "All Ages",
-    },
   });
 
-  const onSubmit = (data: EventFormData) => {
-    console.log(data);
+  const onSubmit = async (data: EventFormData) => {
+    // Generate a slug from event name
+    const slug = data.eventName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    const formData = {
+      ...data,
+      slug,
+    };
+
+    console.log(formData);
+    addNewEvent(formData);
+    // Here you would typically send the data to your API
   };
 
   return (
-    <div className="min-h-screen  py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white/5 rounded-lg shadow-md p-8">
-        <h1 className="text-3xl font-bold text-white mb-8 text-center">
+    <div className="min-h-screen py-8 px-4">
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold mb-6 text-center">
           Create New Event
         </h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Basic Information Section */}
-          <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Basic Information
-            </h2>
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Event Name
+              </label>
+              <input
+                {...register("eventName")}
+                className="mt-1 block w-full h-9 rounded-md border-gray-300 text-black p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter event name"
+              />
+              {errors.eventName && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.eventName.message}
+                </p>
+              )}
+            </div>
 
-            <div className="grid grid-cols-1 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-blue-600">
-                  Event Name
-                </label>
-                <input
-                  {...register("eventName")}
-                  className="mt-1 block w-full text-black rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Enter event name"
-                />
-                {errors.eventName && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.eventName.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-600">
-                  Description
-                </label>
-                <textarea
-                  {...register("description")}
-                  rows={4}
-                  className="mt-1 text-black  block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Describe your event"
-                />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.description.message}
-                  </p>
-                )}
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                {...register("description")}
+                rows={3}
+                className="mt-1 block w-full rounded-md p-2 text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Describe your event"
+              />
+              {errors.description && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.description.message}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Date and Location Section */}
-          <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Date & Location
-            </h2>
+          {/* Location */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className=" text-sm font-medium text-gray-700 flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                City
+              </label>
+              <input
+                {...register("city")}
+                className="mt-1 block w-full p-2 rounded-md text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="City"
+              />
+              {errors.city && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.city.message}
+                </p>
+              )}
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className=" text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4" />
-                  Date & Time
-                </label>
-                <input
-                  {...register("dateTime")}
-                  type="datetime-local"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Address
+              </label>
+              <input
+                {...register("address")}
+                className="mt-1 block w-full rounded-md p-2 text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Event address"
+              />
+              {errors.address && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.address.message}
+                </p>
+              )}
+            </div>
+          </div>
 
-              <div>
-                <label className=" text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Venue Address
-                </label>
-                <input
-                  {...register("venueAddress")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Event location"
-                />
-                {errors.venueAddress && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.venueAddress.message}
-                  </p>
-                )}
-              </div>
+          {/* Date and Time */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className=" text-sm font-medium  text-gray-700 flex items-center gap-1">
+                <CalendarDays className="w-4 h-4" />
+                Date
+              </label>
+              <input
+                {...register("date")}
+                type="date"
+                className="mt-1 block w-full rounded-md p-2 text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+              {errors.date && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.date.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Time
+              </label>
+              <input
+                {...register("time")}
+                type="time"
+                className="mt-1 block w-full p-2 rounded-md text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+              {errors.time && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.time.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Event Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className=" text-sm font-medium text-gray-700 flex items-center gap-1">
+                <Tag className="w-4 h-4" />
+                Category
+              </label>
+              <select
+                {...register("category")}
+                className="mt-1 block w-full rounded-md text-black border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select a category</option>
+                <option value="Music">Music</option>
+                <option value="Sports">Sports</option>
+                <option value="Technology">Technology</option>
+                <option value="Business">Business</option>
+                <option value="Arts">Arts</option>
+              </select>
+              {errors.category && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.category.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className=" text-sm font-medium text-gray-700 flex items-center gap-1">
+                <LinkIcon className="w-4 h-4" />
+                Event Link
+              </label>
+              <input
+                {...register("link")}
+                type="url"
+                className="mt-1 block w-full rounded-md p-2 text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="https://..."
+              />
+              {errors.link && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.link.message}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Organizer Information */}
-          <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Organizer Information
-            </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Organizer Name
+              </label>
+              <input
+                {...register("organizerName")}
+                className="mt-1 block w-full rounded-md p-2 text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Who's organizing?"
+              />
+              {errors.organizerName && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.organizerName.message}
+                </p>
+              )}
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Organizer Name
+                  Contact Number
                 </label>
                 <input
-                  {...register("organizerName")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Who's organizing?"
+                  {...register("contactNo")}
+                  className="mt-1 block w-full rounded-md p-2 text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Phone number"
                 />
-                {errors.organizerName && (
+                {errors.contactNo && (
                   <p className="mt-1 text-sm text-red-600">
-                    {errors.organizerName.message}
+                    {errors.contactNo.message}
                   </p>
                 )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Contact Email
+                  Email Address
                 </label>
                 <input
-                  {...register("contactEmail")}
+                  {...register("email")}
                   type="email"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md p-2 text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="contact@example.com"
                 />
-                {errors.contactEmail && (
+                {errors.email && (
                   <p className="mt-1 text-sm text-red-600">
-                    {errors.contactEmail.message}
+                    {errors.email.message}
                   </p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Additional Details */}
-          <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Additional Details
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className=" text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <Tag className="w-4 h-4" />
-                  Category
-                </label>
-                <select
-                  {...register("category")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="">Select a category</option>
-                  <option value="Music">Music</option>
-                  <option value="Sports">Sports</option>
-                  <option value="Technology">Technology</option>
-                  <option value="Business">Business</option>
-                  <option value="Arts">Arts</option>
-                </select>
-                {errors.category && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.category.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className=" text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Duration (hours)
-                </label>
-                <input
-                  {...register("duration", { valueAsNumber: true })}
-                  type="number"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="2"
-                />
-              </div>
-
-              <div>
-                <label className=" text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Capacity
-                </label>
-                <input
-                  {...register("capacity", { valueAsNumber: true })}
-                  type="number"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="100"
-                />
-              </div>
-
-              <div>
-                <label className=" text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <LinkIcon className="w-4 h-4" />
-                  Ticket Link
-                </label>
-                <input
-                  {...register("ticketLink")}
-                  type="url"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="https://..."
-                />
-                {errors.ticketLink && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.ticketLink.message}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-center">
+          <div className="flex justify-center pt-4">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             >
               Create Event
             </button>
@@ -611,4 +617,4 @@ function App() {
   );
 }
 
-export default App;
+export default EventForm;
