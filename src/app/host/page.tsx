@@ -391,8 +391,8 @@ function EventForm() {
 
   return (
     <div className="min-h-screen py-8 px-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold mb-6 text-center">
+      <div className="max-w-2xl mx-auto bg-white  rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold mb-6 text-center text-black">
           Create New Event
         </h1>
 
